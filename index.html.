@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Reality Check</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --border: #1e1e1e;
+      --text: #f0ece3;
+      --muted: #555;
+      --scroll-color: #ff4d2e;
+      --watch-color: #ffb800;
+      --game-color: #00d9a3;
+      --other-color: #7c6dfa;
+      --accent: #ff4d2e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
+    .mono  { font-family: 'DM Mono', monospace; }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: .6;
+    }
+
+    .container { max-width: 760px; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 1; }
+
+    /* Header */
+    .hero {
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 0 2.5rem;
+    }
+    .hero-tag {
+      display: inline-block;
+      font-size: .7rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: .25rem .7rem;
+      border-radius: 2px;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 {
+      font-size: clamp(3rem, 10vw, 6.5rem);
+      line-height: .95;
+      color: var(--text);
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero-sub {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 500px;
+      line-height: 1.6;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: .65rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Input grid */
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 520px) {
+      .input-row { grid-template-columns: 1fr; }
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+    .input-group label {
+      font-size: .75rem;
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .input-group .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: .4rem;
+    }
+    input[type="number"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 1.25rem;
+      padding: .65rem 1rem;
+      width: 100%;
+      transition: border-color .2s;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    input[type="number"].scroll-input:focus { border-color: var(--scroll-color); }
+    input[type="number"].watch-input:focus  { border-color: var(--watch-color); }
+    input[type="number"].game-input:focus   { border-color: var(--game-color); }
+    input[type="number"].other-input:focus  { border-color: var(--other-color); }
+
+    /* CTA Button */
+    .btn-check {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: .08em;
+      font-size: 1.4rem;
+      padding: .85rem 2rem;
+      cursor: pointer;
+      margin-top: 1.5rem;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn-check:hover  { opacity: .88; }
+    .btn-check:active { transform: scale(.99); }
+
+    /* Results */
+    #results { display: none; }
+    #results.visible { display: block; }
+
+    .result-headline {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .result-headline .label {
+      font-size: .7rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .75rem;
+    }
+    .result-headline .big-stat {
+      font-size: clamp(3.5rem, 12vw, 7rem);
+      line-height: 1;
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: .02em;
+    }
+    .result-headline .quote {
+      font-size: .95rem;
+      color: var(--muted);
+      margin-top: .8rem;
+      font-style: italic;
+      line-height: 1.55;
+    }
+
+    /* Activity rows */
+    .activity-list { padding: 1.5rem 0 0; }
+    .activity-item {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .activity-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+    }
+    .activity-item.scroll::before { background: var(--scroll-color); }
+    .activity-item.watch::before  { background: var(--watch-color); }
+    .activity-item.game::before   { background: var(--game-color); }
+    .activity-item.other::before  { background: var(--other-color); }
+
+    .activity-name {
+      font-size: .65rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+    .activity-years {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.8rem;
+      line-height: 1;
+    }
+    .activity-item.scroll .activity-years { color: var(--scroll-color); }
+    .activity-item.watch  .activity-years { color: var(--watch-color); }
+    .activity-item.game   .activity-years { color: var(--game-color); }
+    .activity-item.other  .activity-years { color: var(--other-color); }
+    .activity-detail {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: .3rem;
+      line-height: 1.6;
+    }
+
+    /* Life Bar */
+    .life-bar-wrap {
+      margin: 2rem 0 .75rem;
+    }
+    .life-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .65rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+    .life-bar {
+      height: 32px;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      background: #1a1a1a;
+    }
+    .life-bar-seg {
+      height: 100%;
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+      position: relative;
+    }
+    .life-bar-seg:hover::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      border: 1px solid #333;
+      color: var(--text);
+      font-size: .7rem;
+      padding: .2rem .5rem;
+      border-radius: 3px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .bar-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem 1.2rem;
+      margin-top: .75rem;
+    }
+    .bar-legend-item {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .7rem;
+      color: var(--muted);
+    }
+    .bar-legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+
+    /* What-if slider */
+    .whatif-section { margin-top: 1.5rem; }
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: .75rem;
+    }
+    .slider-label span:first-child {
+      font-size: .75rem;
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .slider-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.1rem;
+      color: var(--game-color);
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #222;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--game-color);
+      border: 2px solid var(--bg);
+      transition: transform .1s;
+    }
+    input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.3); }
+    .whatif-result {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid #1a2f28;
+      background: #0d1f1b;
+      border-radius: 6px;
+    }
+    .whatif-result .saved-label {
+      font-size: .65rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--game-color);
+      margin-bottom: .25rem;
+    }
+    .whatif-result .saved-years {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      color: var(--game-color);
+      line-height: 1;
+    }
+    .whatif-result .saved-sub {
+      font-size: .8rem;
+      color: #3d9e7e;
+      margin-top: .25rem;
+    }
+
+    /* Share button */
+    .btn-share {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .8rem;
+      padding: .6rem 1.1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-share:hover { border-color: var(--text); color: var(--text); }
+    .btn-share svg { flex-shrink: 0; }
+
+    .share-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+
+    .copied-msg {
+      font-size: .7rem;
+      color: var(--game-color);
+      margin-right: .75rem;
+      align-self: center;
+      display: none;
+    }
+    .copied-msg.show { display: block; }
+
+    /* Divider */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 0;
+      text-align: center;
+      font-size: .7rem;
+      color: #333;
+      letter-spacing: .08em;
+    }
+
+    /* Scroll animation */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .anim { animation: fadeUp .4s ease both; }
+    .anim-1 { animation-delay: .05s; }
+    .anim-2 { animation-delay: .1s; }
+    .anim-3 { animation-delay: .15s; }
+    .anim-4 { animation-delay: .2s; }
+    .anim-5 { animation-delay: .25s; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">Realita yang perlu kamu hadapi</div>
+    <h1 class="bebas">Time<br/><span>Reality</span><br/>Check</h1>
+    <p class="hero-sub">Kamu mungkin tahu kamu sering scrolling. Tapi kamu belum tahu seberapa banyak <em>hidupmu</em> yang sudah habis di sana.</p>
+  </div>
+
+  <!-- FORM -->
+  <div style="padding: 2rem 0;">
+    <div class="card">
+      <div class="card-title">Tentang kamu</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Umur sekarang</label>
+          <input type="number" id="age" min="1" max="100" value="25" />
+        </div>
+        <div class="input-group">
+          <label>Target umur</label>
+          <input type="number" id="target" min="1" max="120" value="75" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Jam per hari — jujur ya</div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label><span class="dot" style="background:var(--scroll-color)"></span>Scrolling sosmed</label>
+          <input class="scroll-input" type="number" id="scroll" min="0" max="24" step="0.5" value="3" />
+        </div>
+        <div class="input-group">
+          <label><span class="dot" style="background:var(--watch-color)"></span>Nonton (YT/Netflix)</label>
+          <input class="watch-input" type="number" id="watch" min="0" max="24" step="0.5" value="2" />
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label><span class="dot" style="background:var(--game-color)"></span>Gaming</label>
+          <input class="game-input" type="number" id="game" min="0" max="24" step="0.5" value="1" />
+        </div>
+        <div class="input-group">
+          <label><span class="dot" style="background:var(--other-color)"></span>Aktivitas lain</label>
+          <input class="other-input" type="number" id="other" min="0" max="24" step="0.5" value="0" />
+        </div>
+      </div>
+
+      <button class="btn-check bebas" onclick="calculate()">Hitung realita saya →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+    <!-- Total headline -->
+    <div class="card anim anim-1" id="result-headline-card">
+      <div class="result-headline">
+        <div class="label">Total waktu yang akan terpakai</div>
+        <div class="big-stat" id="total-years-display" style="color:var(--accent);">—</div>
+        <div id="total-years-label" style="font-size:.9rem; color:var(--muted); margin-top:.25rem; font-family:'DM Mono',monospace;"></div>
+        <div class="quote" id="total-quote"></div>
+      </div>
+    </div>
+
+    <!-- Activity breakdown -->
+    <div class="card anim anim-2">
+      <div class="card-title">Rincian per aktivitas</div>
+      <div class="activity-list" id="activity-list"></div>
+    </div>
+
+    <!-- Life Bar -->
+    <div class="card anim anim-3">
+      <div class="card-title">Peta hidupmu</div>
+      <div class="life-bar-wrap">
+        <div class="life-bar-label">
+          <span>Sekarang (umur <span id="bar-age">0</span>)</span>
+          <span>Target (umur <span id="bar-target">75</span>)</span>
+        </div>
+        <div class="life-bar" id="life-bar"></div>
+        <div class="bar-legend" id="bar-legend"></div>
+      </div>
+    </div>
+
+    <!-- What-if -->
+    <div class="card anim anim-4">
+      <div class="card-title">Mode what-if</div>
+      <p style="font-size:.85rem; color:var(--muted); margin-bottom:1.25rem; line-height:1.6;">Kalau kamu mengurangi total jam aktivitas pasifmu setiap hari, berapa tahun yang bisa kamu selamatkan?</p>
+
+      <div class="whatif-section">
+        <div class="slider-label">
+          <span>Kurangi per hari</span>
+          <span class="slider-val"><span id="slider-val-display">1</span> jam</span>
+        </div>
+        <input type="range" id="whatif-slider" min="0" max="10" step="0.5" value="1" oninput="updateWhatIf()" />
+        <div class="whatif-result" id="whatif-result">
+          <div class="saved-label">Kamu bisa menyelamatkan</div>
+          <div class="saved-years" id="whatif-years">—</div>
+          <div class="saved-sub" id="whatif-sub"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share -->
+    <div class="share-row anim anim-5">
+      <span class="copied-msg" id="copied-msg">✓ Tersalin!</span>
+      <button class="btn-share" onclick="shareResult()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+        </svg>
+        Salin hasil saya
+      </button>
+    </div>
+
+  </div><!-- /results -->
+
+  <footer>Time Reality Check — Bukan untuk membuatmu sedih. Tapi untuk membuatmu sadar.</footer>
+</div>
+
+<script>
+  let state = {};
+
+  const QUOTES = [
+    "Tanpa sadar, ini memakan sebagian hidupmu.",
+    "Ini bukan sekadar angka. Ini adalah waktumu.",
+    "Waktu yang sudah pergi tidak pernah kembali.",
+    "Kamu sudah tahu ini. Sekarang kamu tidak bisa pura-pura tidak tahu.",
+    "Bayangkan semua yang bisa kamu lakukan dengan waktu ini."
+  ];
+
+  const ACTIVITY_QUOTES = {
+    scroll: [
+      "Rata-rata, orang Indonesia menghabiskan lebih dari 3 jam sehari di medsos.",
+      "Setiap scroll adalah pilihan. Sadar atau tidak.",
+      "Konten akan terus ada. Hidupmu tidak."
+    ],
+    watch: [
+      "Autoplay adalah fitur yang paling mahal yang pernah kamu pakai.",
+      "Episode terakhir selalu berujung ke episode berikutnya.",
+      "Menonton itu bukan istirahat. Itu pengalihan."
+    ],
+    game: [
+      "Progress di game nyata, tapi waktunya juga nyata.",
+      "Kamu sudah level berapa di kehidupan nyata?",
+      "Gaming tidak salah. Tapi angka ini tidak bisa diabaikan."
+    ],
+    other: [
+      "Aktivitas pasif lainnya yang menggerogoti tanpa disadari.",
+      "Kebiasaan kecil, akumulasi besar.",
+      "Ini juga bagian dari pola hidupmu."
+    ]
+  };
+
+  function toYears(hours) {
+    return hours / 24 / 365;
+  }
+
+  function fmt(n) {
+    return parseFloat(n.toFixed(2));
+  }
+
+  function fmtDisp(n) {
+    const r = parseFloat(n.toFixed(1));
+    return r % 1 === 0 ? r.toFixed(0) : r.toFixed(1);
+  }
+
+  function calculate() {
+    const age    = parseFloat(document.getElementById('age').value)    || 0;
+    const target = parseFloat(document.getElementById('target').value) || 75;
+    const scroll = parseFloat(document.getElementById('scroll').value) || 0;
+    const watch  = parseFloat(document.getElementById('watch').value)  || 0;
+    const game   = parseFloat(document.getElementById('game').value)   || 0;
+    const other  = parseFloat(document.getElementById('other').value)  || 0;
+
+    const yearsLeft = Math.max(0, target - age);
+
+    function calcYears(hpd) {
+      return toYears(hpd * 365 * yearsLeft);
+    }
+
+    state = {
+      age, target, yearsLeft,
+      scroll: { hpd: scroll, years: calcYears(scroll) },
+      watch:  { hpd: watch,  years: calcYears(watch)  },
+      game:   { hpd: game,   years: calcYears(game)   },
+      other:  { hpd: other,  years: calcYears(other)  },
+    };
+
+    state.totalYears = state.scroll.years + state.watch.years + state.game.years + state.other.years;
+    state.totalHpd   = scroll + watch + game + other;
+
+    renderResults();
+
+    const el = document.getElementById('results');
+    el.classList.add('visible');
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  }
+
+  function renderResults() {
+    const s = state;
+
+    // Headline
+    document.getElementById('total-years-display').textContent = fmtDisp(s.totalYears) + ' TAHUN';
+    document.getElementById('total-years-label').textContent =
+      `dari ${s.yearsLeft} tahun sisa hidupmu (${s.totalHpd} jam/hari)`;
+    document.getElementById('total-quote').textContent =
+      QUOTES[Math.floor(Math.random() * QUOTES.length)];
+
+    // Activities
+    const items = [
+      { key:'scroll', label:'Scrolling Sosmed',     color:'var(--scroll-color)' },
+      { key:'watch',  label:'Nonton YT / Netflix',  color:'var(--watch-color)'  },
+      { key:'game',   label:'Gaming',               color:'var(--game-color)'   },
+      { key:'other',  label:'Aktivitas Lain',       color:'var(--other-color)'  },
+    ];
+    const list = document.getElementById('activity-list');
+    list.innerHTML = '';
+    items.forEach(it => {
+      const d = s[it.key];
+      if (d.hpd <= 0) return;
+      const perYear = fmt(d.hpd * 365 / 24);
+      const quotes  = ACTIVITY_QUOTES[it.key];
+      const q       = quotes[Math.floor(Math.random() * quotes.length)];
+      const div     = document.createElement('div');
+      div.className = `activity-item ${it.key}`;
+      div.innerHTML = `
+        <div class="activity-name">${it.label}</div>
+        <div class="activity-years">${fmtDisp(d.years)} Tahun</div>
+        <div class="activity-detail">
+          ${d.hpd} jam/hari &nbsp;·&nbsp; ${fmtDisp(perYear)} hari/tahun &nbsp;·&nbsp; ${fmtDisp(d.years * 365)} hari seumur hidup
+          <br/><span style="color:#444; font-style:italic;">"${q}"</span>
+        </div>`;
+      list.appendChild(div);
+    });
+
+    // Life bar
+    renderLifeBar();
+
+    // What-if slider max
+    const slider = document.getElementById('whatif-slider');
+    slider.max = Math.min(s.totalHpd, 16);
+    slider.value = Math.min(1, s.totalHpd);
+    updateWhatIf();
+
+    // Bar labels
+    document.getElementById('bar-age').textContent    = s.age;
+    document.getElementById('bar-target').textContent = s.target;
+  }
+
+  function renderLifeBar() {
+    const s   = state;
+    const bar = document.getElementById('life-bar');
+    const leg = document.getElementById('bar-legend');
+    bar.innerHTML = '';
+    leg.innerHTML = '';
+
+    const totalYearsLife = s.yearsLeft;
+    if (totalYearsLife <= 0) return;
+
+    const segs = [
+      { key:'scroll', label:'Scrolling',  color:'var(--scroll-color)', years: s.scroll.years },
+      { key:'watch',  label:'Nonton',     color:'var(--watch-color)',  years: s.watch.years  },
+      { key:'game',   label:'Gaming',     color:'var(--game-color)',   years: s.game.years   },
+      { key:'other',  label:'Lainnya',    color:'var(--other-color)',  years: s.other.years  },
+    ];
+
+    let usedPct = 0;
+    segs.forEach(seg => {
+      if (seg.years <= 0) return;
+      const pct = Math.min((seg.years / totalYearsLife) * 100, 100 - usedPct);
+      usedPct += pct;
+      const el = document.createElement('div');
+      el.className = 'life-bar-seg';
+      el.style.cssText = `width:${pct}%; background:${seg.color};`;
+      el.dataset.label = `${seg.label}: ${fmtDisp(seg.years)}th`;
+      bar.appendChild(el);
+
+      // legend
+      const li = document.createElement('div');
+      li.className = 'bar-legend-item';
+      li.innerHTML = `<span class="bar-legend-dot" style="background:${seg.color}"></span>${seg.label} — ${fmtDisp(seg.years)}th`;
+      leg.appendChild(li);
+    });
+
+    // Remaining
+    const remPct = 100 - usedPct;
+    if (remPct > 0) {
+      const el = document.createElement('div');
+      el.className = 'life-bar-seg';
+      el.style.cssText = `width:${remPct}%; background:#1e1e1e;`;
+      el.dataset.label = `Sisa bebas: ${fmtDisp(remPct / 100 * totalYearsLife)}th`;
+      bar.appendChild(el);
+
+      const li = document.createElement('div');
+      li.className = 'bar-legend-item';
+      li.innerHTML = `<span class="bar-legend-dot" style="background:#1e1e1e; border:1px solid #333;"></span>Sisa bebas — ${fmtDisp(remPct / 100 * totalYearsLife)}th`;
+      leg.appendChild(li);
+    }
+  }
+
+  function updateWhatIf() {
+    const slider  = document.getElementById('whatif-slider');
+    const val     = parseFloat(slider.value);
+    document.getElementById('slider-val-display').textContent = fmtDisp(val);
+
+    if (!state.yearsLeft) return;
+    const savedYears = toYears(val * 365 * state.yearsLeft);
+
+    document.getElementById('whatif-years').textContent = fmtDisp(savedYears) + ' TAHUN';
+    document.getElementById('whatif-sub').textContent =
+      savedYears < 0.5
+        ? `Setiap menit yang kamu simpan berarti.`
+        : savedYears < 2
+        ? `Cukup untuk menyelesaikan sesuatu yang berarti.`
+        : savedYears < 5
+        ? `Bayangkan apa yang bisa kamu capai dalam ${fmtDisp(savedYears)} tahun ekstra.`
+        : `Itu lebih dari cukup untuk mengubah hidupmu sepenuhnya.`;
+  }
+
+  function shareResult() {
+    if (!state.totalYears) return;
+    const s = state;
+    const lines = [
+      '⏳ Time Reality Check',
+      '',
+      `Umur: ${s.age} → Target: ${s.target} (${s.yearsLeft} tahun sisa)`,
+      '',
+    ];
+    if (s.scroll.hpd > 0) lines.push(`📱 Scrolling  : ${s.scroll.hpd} jam/hari → ${fmtDisp(s.scroll.years)} tahun`);
+    if (s.watch.hpd  > 0) lines.push(`📺 Nonton     : ${s.watch.hpd} jam/hari → ${fmtDisp(s.watch.years)} tahun`);
+    if (s.game.hpd   > 0) lines.push(`🎮 Gaming     : ${s.game.hpd} jam/hari → ${fmtDisp(s.game.years)} tahun`);
+    if (s.other.hpd  > 0) lines.push(`⏱  Lainnya    : ${s.other.hpd} jam/hari → ${fmtDisp(s.other.years)} tahun`);
+    lines.push('');
+    lines.push(`TOTAL: ${fmtDisp(s.totalYears)} TAHUN hidupku untuk aktivitas pasif.`);
+    lines.push('');
+    lines.push('"Ini bukan sekadar angka. Ini adalah waktumu."');
+
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      const msg = document.getElementById('copied-msg');
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 2500);
+    });
+  }
+</script>
+</body>
+</html>
